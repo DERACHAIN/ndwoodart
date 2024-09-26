@@ -76,6 +76,6 @@ contract ERC20 is IERC20, Ownable {
     }
 }
 
-contract MyToken is ERC20 {
-    constructor() ERC20("My Token", "myto", 18) {}
+contract NDWoodArtPoint is ERC20 {
+    constructor() ERC20("NDWoodArt Point", "NDL", 18) {}
 }
