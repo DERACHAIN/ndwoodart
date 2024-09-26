@@ -1,0 +1,31 @@
+{
+  "name": "contract-ndwoodart",
+  "version": "1.0.0",
+  "description": "Smart contracts for NDWoodArt, including but not limited to DAO voting, Gacha, Smart Account, Membership, Points",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DERACHAIN/ndwoodart.git"
+  },
+  "keywords": [
+    "DERACHAIN",
+    "ndwoodart"
+  ],
+  "author": "DARE",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DERACHAIN/ndwoodart/issues"
+  },
+  "homepage": "https://github.com/DERACHAIN/ndwoodart#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.12"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5"
+  }
+}
