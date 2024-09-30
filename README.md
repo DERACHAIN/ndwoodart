@@ -1,4 +1,4 @@
-# ndwoodart
+# NDWoodArt
 
 Smart contracts for NDWoodArt, including but not limited to DAO voting, Gacha, Smart Account, Membership, Points.
 
@@ -56,14 +56,29 @@ const config: HardhatUserConfig = {
 }
 ```
 
-- Deploy contract:
+### Deploy contract:
+- Contract NDWoodArt Point (NDL)
 ```shell
-KIND=erc1155 NAME="My 1155 Collection" SYMBOL=my15 npx hardhat run ./scripts/deploy-contract.ts --network bnb_testnet
+KIND=erc20 NAME="NDWoodArt Point" SYMBOL=NDL DECIMALS=18 npx hardhat run ./scripts/deploy-contract.ts --network derachain
 ```
 
-- Verify contract:
+*Verify contract:*
 ```shell
-npx hardhat verify <contract address> "My 1155 Collection" my15 --network bnb_testnet
+npx hardhat verify <contract address> "NDWoodArt Point" NDL 18 --network derachain
+```
+
+- NDWoodArt Membership Card (NDMC): Membership NFT contract is a Collection of NFT2 Prococol. To deploy NFT2 Collection follow [this guide](https://github.com/darenft-labs/nft2-smart-contracts-v1) 
+
+### Deploy Implementation:
+- Deploy Thread Voting (DAO Voting Implementation)
+```shell
+KIND=threadVoting npx hardhat run ./scripts/deploy-implementation.ts --network derachain
+```
+
+### Deploy Factory
+- Deploy Thread Factory
+```shell
+KIND=thread npx hardhat run ./scripts/deploy-factory.ts --network derachain
 ```
 
 ## Cleanup

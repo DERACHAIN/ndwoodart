@@ -20,6 +20,7 @@ describe("ThreadVoting", function () {
     const now = await time.latest();
     const threadVoting = await ethers.deployContract("ThreadVoting");
     await threadVoting.initialize(
+      owner,
       governanceToken.target,
       DESCRIPTION,
       now,
@@ -134,11 +135,14 @@ describe("ThreadVoting", function () {
     });
 
     it("Should not allow voting before voting period start", async function () {
-      const { governanceToken, addr1 } = await loadFixture(deployContract);
+      const { owner, governanceToken, addr1 } = await loadFixture(
+        deployContract
+      );
 
       const now = await time.latest();
       const threadUpcomming = await ethers.deployContract("ThreadVoting");
       await threadUpcomming.initialize(
+        owner,
         governanceToken.target,
         DESCRIPTION,
         now + 3600 * 24,
@@ -155,11 +159,14 @@ describe("ThreadVoting", function () {
     });
 
     it("Should not allow voting after voting period ends", async function () {
-      const { governanceToken, addr1 } = await loadFixture(deployContract);
+      const { owner, governanceToken, addr1 } = await loadFixture(
+        deployContract
+      );
 
       const now = await time.latest();
       const threadEnded = await ethers.deployContract("ThreadVoting");
       await threadEnded.initialize(
+        owner,
         governanceToken.target,
         DESCRIPTION,
         now - 3600 * 48,

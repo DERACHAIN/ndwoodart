@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract ThreadVoting is Initializable, OwnableUpgradeable {
+    address public factory;
     IERC20 public governanceToken;
     string public description;
     uint256 public startTime;
@@ -38,12 +39,14 @@ contract ThreadVoting is Initializable, OwnableUpgradeable {
     );
 
     function initialize(
+        address owner,
         address _governanceToken,
         string memory _description,
         uint256 _startTime,
         uint256 _endTime
     ) public initializer {
-        __Ownable_init(msg.sender);
+        __Ownable_init(owner);
+        factory = msg.sender;
         governanceToken = IERC20(_governanceToken);
         description = _description;
         startTime = _startTime;
@@ -110,7 +113,7 @@ contract ThreadVoting is Initializable, OwnableUpgradeable {
     }
 
     function withdrawTokens() public {
-        require(userClaimed[msg.sender] == false, "Tokens have already been withdrawn");
+        require(!userClaimed[msg.sender], "Tokens have already been withdrawn");
         require(block.timestamp > endTime, "Voting period not ended");
         require(winningProposal > 0, "Thread not ended or no winning proposal");
 

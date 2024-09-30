@@ -23,24 +23,24 @@ contract ThreadFactory is Ownable {
         uint256 _startTime,
         uint256 _endTime
     ) public onlyOwner returns (address) {
-        bytes32 hashKey = keccak256(
+        bytes32 salt = keccak256(
             abi.encode(_implementation, _description, _startTime, _endTime)
         );
         require(
-            _threadRegistries[hashKey] == address(0),
+            _threadRegistries[salt] == address(0),
             "Thread is deployed already."
         );
 
-        bytes32 salt = keccak256(abi.encodePacked(_msgSender()));
         address thread = Clones.cloneDeterministic(_implementation, salt);
 
         ThreadVoting(thread).initialize(
+            msg.sender,
             _governanceToken,
             _description,
             _startTime,
             _endTime
         );
-        _threadRegistries[hashKey] = thread;
+        _threadRegistries[salt] = thread;
 
         emit ThreadVotingCreated(thread, msg.sender, _implementation);
         return thread;
