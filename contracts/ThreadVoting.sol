@@ -61,7 +61,10 @@ contract ThreadVoting is Initializable, OwnableUpgradeable {
     }
 
     function createProposal(string memory _description) public {
-        require(_checkCreateProposalPermission(msg.sender), "User does not have permission");
+        require(
+            _checkCreateProposalPermission(msg.sender),
+            "User does not have permission"
+        );
 
         proposalCount++;
         proposals[proposalCount] = Proposal({
@@ -74,7 +77,10 @@ contract ThreadVoting is Initializable, OwnableUpgradeable {
     }
 
     function vote(uint256 _proposalId, uint256 _amount) public {
-        require(_proposalId > 0 && _proposalId <= proposalCount, "Proposal does not exist");
+        require(
+            _proposalId > 0 && _proposalId <= proposalCount,
+            "Proposal does not exist"
+        );
         require(block.timestamp >= startTime, "Voting period not started");
         require(block.timestamp < endTime, "Voting period has ended");
         require(_amount > 0, "Must vote with at least 1 token");
@@ -128,21 +134,28 @@ contract ThreadVoting is Initializable, OwnableUpgradeable {
 
         // check if user voted to winning proposal => claim by percentage of total votes
         uint256 voteAmount = userVotes[winningProposal][msg.sender];
-        if (claimAmount == 0) {
-            // user is neither proposer nor voted to winning proposal
-            require(voteAmount > 0, "User not voted to winning proposal");
-        }
-
         if (voteAmount > 0) {
             claimAmount +=
                 (voteAmount * ((totalBalance * 9) / 10)) /
                 proposals[winningProposal].totalVotes;
         }
 
-        governanceToken.transfer(msg.sender, claimAmount);
-        emit TokensWithdrawn(winningProposal, msg.sender, claimAmount);
-        
+        require(claimAmount > 0, "No tokens to withdraw");
+
         userClaimed[msg.sender] = true;
+
+        bool success;
+        try governanceToken.transfer(msg.sender, claimAmount) returns (
+            bool _success
+        ) {
+            success = _success;
+        } catch {
+            success = false;
+        }
+
+        require(success, "Token transfer failed");
+
+        emit TokensWithdrawn(winningProposal, msg.sender, claimAmount);
     }
 
     function getProposal(

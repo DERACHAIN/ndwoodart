@@ -296,7 +296,7 @@ describe("ThreadVoting", function () {
       await threadVoting.finishVotingPeriod();
 
       await expect(threadVoting.withdrawTokens()).to.be.revertedWith(
-        "User not voted to winning proposal"
+        "No tokens to withdraw"
       );
     });
 
@@ -316,6 +316,29 @@ describe("ThreadVoting", function () {
       await expect(
         threadVoting.connect(addr1).withdrawTokens()
       ).to.be.revertedWith("Tokens have already been withdrawn");
+    });
+
+    it("Should revert if token transfer failed", async function () {
+      const { threadVoting, governanceToken, owner, addr1 } = await loadFixture(
+        deployContract
+      );
+
+      await governanceToken.mint(addr1.address, 100);
+      await governanceToken.connect(addr1).approve(threadVoting.target, 100);
+
+      await threadVoting.connect(addr1).createProposal("Proposal 1");
+      await threadVoting.connect(addr1).vote(1, 100);
+      await threadVoting.finishVotingPeriod();
+
+      // Mock the transfer function to throw an error
+      await ethers.provider.send("hardhat_setCode", [
+        governanceToken.target,
+        "0x60016000819055505060006000f3",
+      ]);
+
+      await expect(
+        threadVoting.connect(addr1).withdrawTokens()
+      ).to.be.revertedWith("Token transfer failed");
     });
   });
 });
