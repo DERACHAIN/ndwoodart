@@ -213,14 +213,14 @@ describe("ERC20", function () {
     });
   });
 
-  describe("MyToken", function () {
-    it("Deploy contract MyToken", async function () {
-      const myTokenFactory = await ethers.getContractFactory("MyToken");
+  describe("NDWoodArtPoint", function () {
+    it("Deploy contract NDWoodArtPoint", async function () {
+      const myTokenFactory = await ethers.getContractFactory("NDWoodArtPoint");
       const deploy = await myTokenFactory.deploy();
       const myToken = await deploy.waitForDeployment();
 
-      expect(await myToken.name()).to.equal("My Token");
-      expect(await myToken.symbol()).to.equal("myto");
+      expect(await myToken.name()).to.equal("NDWoodArt Point");
+      expect(await myToken.symbol()).to.equal("NDL");
       expect(await myToken.decimals()).to.equal(18);
     });
   });
