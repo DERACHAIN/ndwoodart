@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ERC1155 is IERC1155, IERC1155MetadataURI {
     // owner => id => balance
@@ -73,14 +74,7 @@ contract ERC1155 is IERC1155, IERC1155MetadataURI {
 
         emit TransferBatch(msg.sender, from, to, ids, values);
 
-        _checkOnERC1155BatchReceived(
-            msg.sender,
-            from,
-            to,
-            ids,
-            values,
-            data
-        );
+        _checkOnERC1155BatchReceived(msg.sender, from, to, ids, values, data);
     }
 
     // ERC165
@@ -109,14 +103,7 @@ contract ERC1155 is IERC1155, IERC1155MetadataURI {
 
         emit TransferSingle(msg.sender, address(0), to, id, value);
 
-        _checkOnERC1155Received(
-            msg.sender,
-            address(0),
-            to,
-            id,
-            value,
-            data
-        );
+        _checkOnERC1155Received(msg.sender, address(0), to, id, value, data);
     }
 
     function _batchMint(
@@ -235,12 +222,15 @@ contract ERC1155 is IERC1155, IERC1155MetadataURI {
     }
 }
 
-contract MyMultiToken is ERC1155 {
+contract NDWoodArt1155 is ERC1155, Ownable {
     string private _name;
     string private _symbol;
     mapping(uint256 => string) private _tokenURIs;
 
-    constructor(string memory name_, string memory symbol_) {
+    constructor(
+        string memory name_,
+        string memory symbol_
+    ) Ownable(msg.sender) {
         _name = name_;
         _symbol = symbol_;
     }
@@ -260,35 +250,42 @@ contract MyMultiToken is ERC1155 {
     }
 
     function mintWithUri(
+        address to,
         uint256 id,
         uint256 value,
         string memory newuri
-    ) external {
-        _mint(msg.sender, id, value, "");
+    ) public onlyOwner {
+        _mint(to, id, value, "");
         _tokenURIs[id] = newuri;
         emit URI(newuri, id);
     }
 
-    function mint(uint256 id, uint256 value, bytes memory data) external {
-        _mint(msg.sender, id, value, data);
+    function mint(
+        address to,
+        uint256 id,
+        uint256 value,
+        bytes memory data
+    ) external onlyOwner {
+        _mint(to, id, value, data);
     }
 
     function batchMint(
+        address to,
         uint256[] calldata ids,
         uint256[] calldata values,
         bytes calldata data
-    ) external {
-        _batchMint(msg.sender, ids, values, data);
+    ) public onlyOwner {
+        _batchMint(to, ids, values, data);
     }
 
-    function burn(uint256 id, uint256 value) external {
+    function burn(uint256 id, uint256 value) public {
         _burn(msg.sender, id, value);
     }
 
     function batchBurn(
         uint256[] calldata ids,
         uint256[] calldata values
-    ) external {
+    ) public {
         _batchBurn(msg.sender, ids, values);
     }
 }

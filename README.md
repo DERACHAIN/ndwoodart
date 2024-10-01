@@ -67,6 +67,16 @@ KIND=erc20 NAME="NDWoodArt Point" SYMBOL=NDL DECIMALS=18 npx hardhat run ./scrip
 npx hardhat verify <contract address> "NDWoodArt Point" NDL 18 --network derachain
 ```
 
+- Contract NDWoodArt 1155 (for gacha, traits)
+```shell
+KIND=erc1155 NAME="NDWoodArt Items" SYMBOL=NDI npx hardhat run ./scripts/deploy-contract.ts --network derachain
+```
+
+*Verify contract:*
+```shell
+npx hardhat verify <contract address> "NDWoodArt Items" NDI --network derachain
+```
+
 - NDWoodArt Membership Card (NDMC): Membership NFT contract is a Collection of NFT2 Prococol. To deploy NFT2 Collection follow [this guide](https://github.com/darenft-labs/nft2-smart-contracts-v1) 
 
 ### Deploy Implementation:

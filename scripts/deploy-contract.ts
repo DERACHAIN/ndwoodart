@@ -37,7 +37,7 @@ async function main() {
 
       if (!name || !symbol) throw new Error(`Name and symbol must not empty`);
 
-      const factory = await ethers.getContractFactory("MyMultiToken");
+      const factory = await ethers.getContractFactory("NDWoodArt1155");
       const deploy = await factory.deploy(name, symbol);
       const myCollection = await deploy.waitForDeployment();
 

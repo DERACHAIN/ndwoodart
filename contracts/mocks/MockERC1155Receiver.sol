@@ -30,3 +30,31 @@ contract MockERC1155Receiver is IERC1155Receiver {
         return interfaceId == type(IERC165).interfaceId; // ERC165 Interface ID for ERC165
     }
 }
+
+contract MockERC1155WrongReceiver is IERC1155Receiver {
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) public pure override returns (bytes4) {
+        return "0x";
+    }
+
+    function onERC1155BatchReceived(
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
+    ) public pure override returns (bytes4) {
+        return "0x";
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) external pure override returns (bool) {
+        return interfaceId == type(IERC165).interfaceId; // ERC165 Interface ID for ERC165
+    }
+}

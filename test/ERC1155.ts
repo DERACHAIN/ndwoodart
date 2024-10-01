@@ -17,7 +17,7 @@ describe("ERC1155", function () {
   async function deployContract() {
     const [owner, addr1, addr2] = await ethers.getSigners();
 
-    const factory = await ethers.getContractFactory("MyMultiToken");
+    const factory = await ethers.getContractFactory("NDWoodArt1155");
     const deploy = await factory.deploy(CollectionName, CollectionSymbol);
     const myCollection = await deploy.waitForDeployment();
 
@@ -80,7 +80,12 @@ describe("ERC1155", function () {
 
     it("Should set right token uri", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      let mint = await myCollection.mintWithUri(0, 100, DefaultTokenURI);
+      let mint = await myCollection.mintWithUri(
+        owner.address,
+        0,
+        100,
+        DefaultTokenURI
+      );
       expect(await myCollection.uri(0)).to.equal(DefaultTokenURI);
 
       await expect(mint)
@@ -90,9 +95,45 @@ describe("ERC1155", function () {
   });
 
   describe("Mint", function () {
+    it("Error if minter not contract owner", async function () {
+      const { myCollection, addr1 } = await loadFixture(deployContract);
+      let mint = myCollection.connect(addr1).mint(addr1.address, 0, 100, "0x");
+
+      await expect(mint).to.be.revertedWithCustomError(
+        myCollection,
+        "OwnableUnauthorizedAccount"
+      );
+    });
+
+    it("Error if not ERC1155TokenReceiver", async function () {
+      const { myCollection, owner } = await loadFixture(deployContract);
+      const myToken = await ethers.deployContract("ERC20", [
+        "Test",
+        "test",
+        18,
+      ]);
+      const myTokenContract = await myToken.getAddress();
+
+      let mint = myCollection.mint(myTokenContract, 0, 100, "0x");
+      await expect(mint).to.be.revertedWith(
+        "transfer to non ERC1155Receiver implementer"
+      );
+    });
+
+    it("Error if onERC1155Received response not right", async function () {
+      const { myCollection } = await loadFixture(deployContract);
+      const MockERC1155WrongReceiver = await ethers.deployContract(
+        "MockERC1155WrongReceiver"
+      );
+      const myContract = await MockERC1155WrongReceiver.getAddress();
+
+      let mint = myCollection.mint(myContract, 0, 100, "0x");
+      await expect(mint).to.be.revertedWith("ERC1155Receiver rejected tokens");
+    });
+
     it("Should mint success", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      let mint = await myCollection.mint(0, 100, "0x");
+      let mint = await myCollection.mint(owner.address, 0, 100, "0x");
       expect(await myCollection.balanceOf(owner, 0)).to.equal(100);
 
       await expect(mint)
@@ -103,15 +144,68 @@ describe("ERC1155", function () {
 
   describe("BatchMint", function () {
     it("Error if data not valid", async function () {
-      const { myCollection } = await loadFixture(deployContract);
-      let mint = myCollection.batchMint([0, 1, 2], [], "0x");
+      const { myCollection, owner } = await loadFixture(deployContract);
+      let mint = myCollection.batchMint(owner.address, [0, 1, 2], [], "0x");
 
       await expect(mint).to.be.revertedWith("ids length != values length");
     });
 
+    it("Error if minter not contract owner", async function () {
+      const { myCollection, addr1 } = await loadFixture(deployContract);
+      let mint = myCollection
+        .connect(addr1)
+        .batchMint(addr1.address, [0, 1, 2], [100, 200, 300], "0x");
+
+      await expect(mint).to.be.revertedWithCustomError(
+        myCollection,
+        "OwnableUnauthorizedAccount"
+      );
+    });
+
+    it("Error if not ERC1155TokenReceiver", async function () {
+      const { myCollection, owner } = await loadFixture(deployContract);
+      const myToken = await ethers.deployContract("ERC20", [
+        "Test",
+        "test",
+        18,
+      ]);
+      const myTokenContract = await myToken.getAddress();
+
+      let mint = myCollection.batchMint(
+        myTokenContract,
+        [0, 1, 2],
+        [100, 200, 300],
+        "0x"
+      );
+      await expect(mint).to.be.revertedWith(
+        "transfer to non ERC1155Receiver implementer"
+      );
+    });
+
+    it("Error if onERC1155BatchReceived response not right", async function () {
+      const { myCollection, owner } = await loadFixture(deployContract);
+      const MockERC1155WrongReceiver = await ethers.deployContract(
+        "MockERC1155WrongReceiver"
+      );
+      const myContract = await MockERC1155WrongReceiver.getAddress();
+
+      let mint = myCollection.batchMint(
+        myContract,
+        [0, 1, 2],
+        [100, 200, 300],
+        "0x"
+      );
+      await expect(mint).to.be.revertedWith("ERC1155Receiver rejected tokens");
+    });
+
     it("Should mint success", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      let mint = await myCollection.batchMint([0, 1, 2], [100, 200, 300], "0x");
+      let mint = await myCollection.batchMint(
+        owner.address,
+        [0, 1, 2],
+        [100, 200, 300],
+        "0x"
+      );
       expect(await myCollection.balanceOf(owner, 0)).to.equal(100);
       expect(await myCollection.balanceOf(owner, 1)).to.equal(200);
       expect(await myCollection.balanceOf(owner, 2)).to.equal(300);
@@ -130,18 +224,18 @@ describe("ERC1155", function () {
 
   describe("Burn", function () {
     it("Error if value not enough", async function () {
-      const { myCollection } = await loadFixture(deployContract);
+      const { myCollection, owner } = await loadFixture(deployContract);
       let burn = myCollection.burn(0, 100);
       await expect(burn).to.be.revertedWith("token value not enough");
 
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
       burn = myCollection.burn(0, 200);
       await expect(burn).to.be.revertedWith("token value not enough");
     });
 
     it("Should burn success", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let burn = await myCollection.burn(0, 50);
       expect(await myCollection.balanceOf(owner, 0)).to.equal(50);
@@ -163,18 +257,23 @@ describe("ERC1155", function () {
     });
 
     it("Error if value not enough", async function () {
-      const { myCollection } = await loadFixture(deployContract);
+      const { myCollection, owner } = await loadFixture(deployContract);
       let burn = myCollection.batchBurn([0, 1], [100, 200]);
       await expect(burn).to.be.revertedWith("token value not enough");
 
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
       burn = myCollection.batchBurn([0, 1], [100, 200]);
       await expect(burn).to.be.revertedWith("token value not enough");
     });
 
     it("Should burn success", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.batchMint([0, 1, 2], [100, 200, 300], "0x");
+      await myCollection.batchMint(
+        owner.address,
+        [0, 1, 2],
+        [100, 200, 300],
+        "0x"
+      );
 
       let burn = await myCollection.batchBurn([0, 1], [100, 100]);
       expect(await myCollection.balanceOf(owner, 0)).to.equal(0);
@@ -210,8 +309,8 @@ describe("ERC1155", function () {
 
     it("Should balance of batch success", async function () {
       const { myCollection, owner, addr1 } = await loadFixture(deployContract);
-      await myCollection.batchMint([0, 1], [100, 200], "0x");
-      await myCollection.connect(addr1).batchMint([1, 2], [300, 400], "0x");
+      await myCollection.batchMint(owner.address, [0, 1], [100, 200], "0x");
+      await myCollection.batchMint(addr1.address, [1, 2], [300, 400], "0x");
 
       let balanceOfBatch = await myCollection.balanceOfBatch(
         [owner, owner, addr1, addr1],
@@ -242,7 +341,7 @@ describe("ERC1155", function () {
       const { myCollection, owner, addr1, addr2 } = await loadFixture(
         deployContract
       );
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = myCollection.safeTransferFrom(addr1, addr2, 0, 50, "0x");
       await expect(transfer).to.be.revertedWith("not approved");
@@ -255,7 +354,7 @@ describe("ERC1155", function () {
 
     it("Error if transfer to zero address", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = myCollection.safeTransferFrom(
         owner,
@@ -269,7 +368,7 @@ describe("ERC1155", function () {
 
     it("Should transfer right", async function () {
       const { myCollection, owner, addr1 } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = await myCollection.safeTransferFrom(
         owner,
@@ -291,7 +390,7 @@ describe("ERC1155", function () {
       const { myCollection, owner, addr1, addr2 } = await loadFixture(
         deployContract
       );
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       await myCollection.setApprovalForAll(addr1, true);
       await myCollection
@@ -309,7 +408,7 @@ describe("ERC1155", function () {
 
     it("Error if not ERC1155TokenReceiver", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       const erc20Factory = await ethers.getContractFactory("ERC20");
       const deploy = await erc20Factory.deploy("Test", "test", 18);
@@ -328,16 +427,35 @@ describe("ERC1155", function () {
       );
     });
 
+    it("Error if onERC1155Received response not right", async function () {
+      const { myCollection, owner } = await loadFixture(deployContract);
+      const MockERC1155WrongReceiver = await ethers.deployContract(
+        "MockERC1155WrongReceiver"
+      );
+      const myContract = await MockERC1155WrongReceiver.getAddress();
+
+      let transfer = myCollection.safeTransferFrom(
+        owner,
+        myContract,
+        0,
+        50,
+        "0x"
+      );
+      await expect(transfer).to.be.revertedWith(
+        "ERC1155Receiver rejected tokens"
+      );
+    });
+
     it("Success if is not contract", async function () {
       const { myCollection, owner, addr1 } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
       await myCollection.safeTransferFrom(owner, addr1, 0, 50, "0x");
       expect(await myCollection.balanceOf(addr1, 0)).to.equal(50);
     });
 
     it("Success if is ERC1155TokenReceiver", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       const mockERC1155Receiver = await ethers.deployContract(
         "MockERC1155Receiver"
@@ -354,7 +472,7 @@ describe("ERC1155", function () {
       const { myCollection, owner, addr1, addr2 } = await loadFixture(
         deployContract
       );
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = myCollection.safeBatchTransferFrom(
         addr1,
@@ -373,7 +491,7 @@ describe("ERC1155", function () {
 
     it("Error if transfer to zero address", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = myCollection.safeBatchTransferFrom(
         owner,
@@ -399,7 +517,7 @@ describe("ERC1155", function () {
 
     it("Should transfer right", async function () {
       const { myCollection, owner, addr1 } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = await myCollection.safeBatchTransferFrom(
         owner,
@@ -422,7 +540,7 @@ describe("ERC1155", function () {
       const { myCollection, owner, addr1, addr2 } = await loadFixture(
         deployContract
       );
-      await myCollection.batchMint([0, 1], [100, 200], "0x");
+      await myCollection.batchMint(owner.address, [0, 1], [100, 200], "0x");
 
       await myCollection.setApprovalForAll(addr1, true);
       await myCollection
@@ -442,7 +560,7 @@ describe("ERC1155", function () {
 
     it("Error if not ERC1155TokenReceiver", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       const erc20Factory = await ethers.getContractFactory("ERC20");
       const deploy = await erc20Factory.deploy("Test", "test", 18);
@@ -461,16 +579,35 @@ describe("ERC1155", function () {
       );
     });
 
+    it("Error if onERC1155BatchReceived response not right", async function () {
+      const { myCollection, owner } = await loadFixture(deployContract);
+      const MockERC1155WrongReceiver = await ethers.deployContract(
+        "MockERC1155WrongReceiver"
+      );
+      const myContract = await MockERC1155WrongReceiver.getAddress();
+
+      let transfer = myCollection.safeBatchTransferFrom(
+        owner,
+        myContract,
+        [0],
+        [50],
+        "0x"
+      );
+      await expect(transfer).to.be.revertedWith(
+        "ERC1155Receiver rejected tokens"
+      );
+    });
+
     it("Success if is not contract", async function () {
       const { myCollection, owner, addr1 } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
       await myCollection.safeBatchTransferFrom(owner, addr1, [0], [50], "0x");
       expect(await myCollection.balanceOf(addr1, 0)).to.equal(50);
     });
 
     it("Success if is ERC1155TokenReceiver", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
-      await myCollection.mint(0, 100, "0x");
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       const mockERC1155Receiver = await ethers.deployContract(
         "MockERC1155Receiver"
