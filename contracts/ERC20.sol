@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract ERC20 is IERC20, Ownable {
+contract ERC20 is IERC20 {
     uint256 public totalSupply;
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
@@ -13,7 +13,7 @@ contract ERC20 is IERC20, Ownable {
     string public symbol;
     uint8 public decimals;
 
-    constructor(string memory _name, string memory _symbol, uint8 _decimals) Ownable(msg.sender) {
+    constructor(string memory _name, string memory _symbol, uint8 _decimals) {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
@@ -67,15 +67,23 @@ contract ERC20 is IERC20, Ownable {
         emit Transfer(from, address(0), amount);
     }
 
-    function mint(address to, uint256 amount) external onlyOwner {
+    function mint(address to, uint256 amount) external virtual {
         _mint(to, amount);
     }
 
-    function burn(address from, uint256 amount) external onlyOwner {
+    function burn(address from, uint256 amount) external virtual {
         _burn(from, amount);
     }
 }
 
-contract NDWoodArtPoint is ERC20 {
-    constructor() ERC20("NDWoodArt Point", "NDL", 18) {}
+contract NDWoodArtPoint is ERC20, Ownable {
+    constructor() ERC20("NDWoodArt Point", "NDL", 18) Ownable(msg.sender) {}
+
+    function mint(address to, uint256 amount) external override onlyOwner {
+        _mint(to, amount);
+    }
+
+    function burn(address from, uint256 amount) external override onlyOwner {
+        _burn(from, amount);
+    }
 }

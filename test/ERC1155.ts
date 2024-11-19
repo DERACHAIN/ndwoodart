@@ -7,7 +7,7 @@ describe("ERC1155", function () {
   const CollectionName = "My 1155 Collection";
   const CollectionSymbol = "my15";
   const DefaultTokenURI =
-    "ipfs://QmakAFezCU2BTe3D5VsMBkMx6Y1U4RRCnpZGWDTGyKYyKB";
+    "https://darenft.myfilebase.com/ipfs/QmQAmuUqtcK4uaovbCoJwZeoGJv9PdLHnvQjYmUGduEHoN";
 
   const _INTERFACE_ID_ERC165 = "0x01ffc9a7";
   const _INTERFACE_ID_ERC1155 = "0xd9b67a26";
@@ -66,6 +66,15 @@ describe("ERC1155", function () {
       );
 
       isSupport = await mockERC1155Receiver.supportsInterface(
+        _INTERFACE_ID_ERC165
+      );
+      expect(isSupport).to.equal(true);
+
+      const mockERC1155WrongReceiver = await ethers.deployContract(
+        "MockERC1155WrongReceiver"
+      );
+
+      isSupport = await mockERC1155WrongReceiver.supportsInterface(
         _INTERFACE_ID_ERC165
       );
       expect(isSupport).to.equal(true);
@@ -406,6 +415,13 @@ describe("ERC1155", function () {
       expect(await myCollection.balanceOf(addr2, 0)).to.equal(50);
     });
 
+    it("Error if insufficient balance", async function () {
+      const { myCollection, owner, addr1 } = await loadFixture(deployContract);
+      await myCollection.mint(owner.address, 0, 100, "0x");
+      let transfer = myCollection.safeTransferFrom(owner, addr1, 0, 101, "0x");
+      await expect(transfer).to.be.revertedWith("insufficient balance");
+    });
+
     it("Error if not ERC1155TokenReceiver", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
       await myCollection.mint(owner.address, 0, 100, "0x");
@@ -433,6 +449,7 @@ describe("ERC1155", function () {
         "MockERC1155WrongReceiver"
       );
       const myContract = await MockERC1155WrongReceiver.getAddress();
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = myCollection.safeTransferFrom(
         owner,
@@ -558,6 +575,19 @@ describe("ERC1155", function () {
       expect(await myCollection.balanceOf(addr2, 1)).to.equal(50);
     });
 
+    it("Error if insufficient balance", async function () {
+      const { myCollection, owner, addr1 } = await loadFixture(deployContract);
+      await myCollection.mint(owner.address, 0, 100, "0x");
+      let transfer = myCollection.safeBatchTransferFrom(
+        owner,
+        addr1,
+        [0],
+        [101],
+        "0x"
+      );
+      await expect(transfer).to.be.revertedWith("insufficient balance");
+    });
+
     it("Error if not ERC1155TokenReceiver", async function () {
       const { myCollection, owner } = await loadFixture(deployContract);
       await myCollection.mint(owner.address, 0, 100, "0x");
@@ -585,6 +615,7 @@ describe("ERC1155", function () {
         "MockERC1155WrongReceiver"
       );
       const myContract = await MockERC1155WrongReceiver.getAddress();
+      await myCollection.mint(owner.address, 0, 100, "0x");
 
       let transfer = myCollection.safeBatchTransferFrom(
         owner,

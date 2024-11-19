@@ -33,6 +33,28 @@ describe("ERC20", function () {
     return { myToken, owner, addr1, addr2 };
   }
 
+  async function deployNDWoodArtPoint() {
+    const [owner, addr1, addr2] = await ethers.getSigners();
+
+    const erc20Factory = await ethers.getContractFactory("NDWoodArtPoint");
+    const deploy = await erc20Factory.deploy();
+    const myToken = await deploy.waitForDeployment();
+
+    await myToken.mint(owner.address, 1000000);
+
+    console.log(
+      "contract point created: ",
+      await myToken.name(),
+      await myToken.symbol(),
+      await myToken.decimals(),
+      await myToken.totalSupply(),
+      myToken.target
+    );
+
+    // Fixtures can return anything you consider useful for your tests
+    return { myToken, owner, addr1, addr2 };
+  }
+
   describe("Initialization", function () {
     it("Should set right information", async function () {
       const { myToken, owner } = await loadFixture(deployContract);
@@ -156,7 +178,7 @@ describe("ERC20", function () {
     });
 
     it("Should revert when non-owner tries to mint", async function () {
-      const { myToken, addr1 } = await loadFixture(deployContract);
+      const { myToken, owner, addr1 } = await loadFixture(deployNDWoodArtPoint);
 
       await expect(myToken.connect(addr1).mint(addr1.address, 100))
         .to.be.revertedWithCustomError(myToken, "OwnableUnauthorizedAccount")
@@ -165,7 +187,7 @@ describe("ERC20", function () {
       // Verify that the balance and total supply remain unchanged
       expect(await myToken.balanceOf(addr1.address)).to.equal(0);
       expect(await myToken.totalSupply()).to.equal(
-        await myToken.balanceOf(await myToken.owner())
+        await myToken.balanceOf(owner)
       );
     });
   });
@@ -195,7 +217,7 @@ describe("ERC20", function () {
     });
 
     it("Should revert when non-owner tries to burn", async function () {
-      const { myToken, owner, addr1 } = await loadFixture(deployContract);
+      const { myToken, owner, addr1 } = await loadFixture(deployNDWoodArtPoint);
 
       // Mint some tokens to addr1 first
       await myToken.mint(addr1.address, 100);
@@ -222,6 +244,27 @@ describe("ERC20", function () {
       expect(await myToken.name()).to.equal("NDWoodArt Point");
       expect(await myToken.symbol()).to.equal("NDL");
       expect(await myToken.decimals()).to.equal(18);
+    });
+
+    it("Should set right balances after mint", async function () {
+      const { myToken, owner, addr1 } = await loadFixture(deployContract);
+
+      await myToken.mint(addr1, 100);
+
+      expect(await myToken.balanceOf(addr1)).to.equal(100);
+      expect(await myToken.totalSupply()).to.equal(
+        (await myToken.balanceOf(owner)) + BigInt(100)
+      );
+    });
+
+    it("Should set right balances after burn", async function () {
+      const { myToken, owner } = await loadFixture(deployNDWoodArtPoint);
+
+      const valueAfterBurn = (await myToken.balanceOf(owner)) - BigInt(100);
+      await myToken.burn(owner, 100);
+
+      expect(await myToken.balanceOf(owner)).to.equal(valueAfterBurn);
+      expect(await myToken.totalSupply()).to.equal(valueAfterBurn);
     });
   });
 });

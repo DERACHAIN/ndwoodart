@@ -7,7 +7,7 @@ describe("ERC721", function () {
   const CollectionName = "My NFT Collection";
   const CollectionSymbol = "mync";
   const DefaultTokenURI =
-    "ipfs://QmakAFezCU2BTe3D5VsMBkMx6Y1U4RRCnpZGWDTGyKYyKB";
+    "https://darenft.myfilebase.com/ipfs/QmQAmuUqtcK4uaovbCoJwZeoGJv9PdLHnvQjYmUGduEHoN";
   const _INTERFACE_ID_ERC165 = "0x01ffc9a7";
   const _INTERFACE_ID_ERC721 = "0x80ac58cd";
   const _INTERFACE_ID_ERC721_METADATA = "0x5b5e139f";

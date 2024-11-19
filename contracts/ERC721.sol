@@ -197,7 +197,7 @@ contract MyNFT is ERC721 {
 
     function mint(address to, uint256 id) external {
         if (id == 0) id = startingIndex;
-        _mint(to, id, "ipfs://QmakAFezCU2BTe3D5VsMBkMx6Y1U4RRCnpZGWDTGyKYyKB");
+        _mint(to, id, "https://darenft.myfilebase.com/ipfs/QmQAmuUqtcK4uaovbCoJwZeoGJv9PdLHnvQjYmUGduEHoN");
         if (startingIndex == id) startingIndex++;
     }
 

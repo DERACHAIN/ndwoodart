@@ -44,6 +44,7 @@ contract ERC1155 is IERC1155, IERC1155MetadataURI {
             "not approved"
         );
         require(to != address(0), "to = 0 address");
+        require(balanceOf[from][id] >= value, "insufficient balance");
 
         balanceOf[from][id] -= value;
         balanceOf[to][id] += value;
@@ -68,6 +69,8 @@ contract ERC1155 is IERC1155, IERC1155MetadataURI {
         require(ids.length == values.length, "ids length != values length");
 
         for (uint256 i = 0; i < ids.length; i++) {
+            require(balanceOf[from][ids[i]] >= values[i], "insufficient balance");
+
             balanceOf[from][ids[i]] -= values[i];
             balanceOf[to][ids[i]] += values[i];
         }
